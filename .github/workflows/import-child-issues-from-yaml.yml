@@ -1,4 +1,4 @@
-name: Import Issues from YAML
+name: Import Child Issues from YAML
 
 on:
   workflow_dispatch:
