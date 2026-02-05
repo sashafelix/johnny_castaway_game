@@ -1,0 +1,182 @@
+milestone_number: 4
+milestone: "M3 – Biome 2 Systems"
+issues:
+  - title: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:epic", "area:systems", "estimate:L", "risk:M"]
+    area: systems
+    estimate: L
+    risk: M
+    body:
+      goal: "Introduce Biome 2 with distinct generation/modifiers so runs feel meaningfully different after prestige/escape."
+      acceptance_criteria:
+        - "Biome 2 is reachable via transition/unlock."
+        - "Biome 2 generation uses seed + biome id (deterministic)."
+        - "Biome 2 has at least 3 biome modifiers (terrain bias, resource scarcity, hazard bias)."
+        - "Spawn + camp placement rules handle Biome 2 safely."
+        - "Biome 2 can run end-to-end with existing core loop (no blockers)."
+      in_scope:
+        - "Biome-aware generator hooks (biome id influences parameters)."
+        - "Biome modifier system (data-driven)."
+        - "Biome 2 terrain rules (new types / placement constraints)."
+      out_of_scope:
+        - "New art pack dependency (placeholders OK)."
+        - "Biome 3+."
+      child_issue_checklist:
+        - "Add biome identifier to run state + seed derivation"
+        - "Implement Biome 2 generator parameters (size, densities, terrain bias)"
+        - "Add Biome 2 terrain types (at least 2 new types) + rules"
+        - "Implement biome modifiers system (3 modifiers) (data-driven)"
+        - "Ensure spawn/camp placement never lands on invalid tiles (Biome 2)"
+        - "Add DevHUD toggle to start run directly in Biome 2"
+      notes: |-
+        ### Milestone required
+        GitHub issue forms can’t truly force milestone selection, but our DoD can:
+        **No milestone = not Ready.**
+
+  - title: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:epic", "area:systems", "estimate:L", "risk:H"]
+    area: systems
+    estimate: L
+    risk: H
+    body:
+      goal: "Add a second hazard mechanic that changes player strategy, with clear telegraphing and multiple mitigations."
+      acceptance_criteria:
+        - "Hazard v2 is distinct from v1 (new meters/rules)."
+        - "Hazard v2 integrates with tick sim and save/load."
+        - "At least 3 mitigations exist (upgrade/item/behavior)."
+        - "UI telegraphs hazard state clearly and feels fair."
+        - "At least 2 events interact with hazard v2."
+      in_scope:
+        - "Hazard v2 spec + implementation."
+        - "Mitigation content and tuning knobs."
+        - "UI cues + feedback loops."
+      out_of_scope:
+        - "Additional hazards beyond v2."
+        - "Advanced AI systems."
+      child_issue_checklist:
+        - "Choose Hazard v2 concept + write short spec (rules, meters, failure)"
+        - "Implement hazard v2 state machine + tick integration"
+        - "Add hazard v2 UI cues (meter/alerts/telegraph states)"
+        - "Add 3 mitigation options for hazard v2 (upgrade/item/behavior)"
+        - "Tune hazard v2 baseline parameters (Biome 2)"
+        - "Add 2 events that interact with hazard v2 (buff/debuff)"
+        - "Fairness pass on hazard v2 game-over (warnings + grace)"
+      notes: |-
+        ### Milestone required
+        GitHub issue forms can’t truly force milestone selection, but our DoD can:
+        **No milestone = not Ready.**
+
+  - title: "EPIC: M3 — Biome 2 economy & resources (new nodes + tuning)"
+    labels: ["type:epic", "area:balance", "estimate:M", "risk:M"]
+    area: balance
+    estimate: M
+    risk: M
+    body:
+      goal: "Extend the economy with Biome 2-specific resources/nodes and tune so progression remains steady."
+      acceptance_criteria:
+        - "At least 2 new resource nodes exist in Biome 2 with distinct roles."
+        - "Economy remains deterministic and save/load stable."
+        - "BalanceConfig supports biome-specific overrides."
+        - "Run summary includes biome-specific KPIs."
+      in_scope:
+        - "New nodes/resources with spawn and gather rules."
+        - "Biome overrides for rates/costs/hazards."
+        - "Tuning pass and KPIs."
+      out_of_scope:
+        - "Complex crafting chains."
+        - "Full analytics backend."
+      child_issue_checklist:
+        - "Add 2 Biome 2 resource nodes (spawn rules + gather effects)"
+        - "Add biome-specific BalanceConfig overrides (rates/costs/hazard params)"
+        - "Extend run stats for Biome 2 KPIs (node yields, scarcity)"
+        - "Balance pass for Biome 2 economy targets"
+      notes: |-
+        ### Milestone required
+        GitHub issue forms can’t truly force milestone selection, but our DoD can:
+        **No milestone = not Ready.**
+
+  - title: "EPIC: M3 — Biome 2 events pack (content + interactions)"
+    labels: ["type:epic", "area:content", "estimate:M", "risk:M"]
+    area: content
+    estimate: M
+    risk: M
+    body:
+      goal: "Deliver a Biome 2 event set that leans into its new rules and hazard v2, adding replayable choice moments."
+      acceptance_criteria:
+        - "At least 6 Biome 2 events implemented with 2+ outcomes each."
+        - "At least 2 events reference Biome 2 resources/nodes."
+        - "At least 2 events reference hazard v2."
+        - "Events are deterministic and save/load safe."
+      in_scope:
+        - "Biome-tagged events and requirements."
+        - "Outcome hooks into Biome 2 systems."
+      out_of_scope:
+        - "Narrative polish / localization."
+      child_issue_checklist:
+        - "Add biome tagging/gating for events (Biome 2 only)"
+        - "Implement 6 Biome 2 events + outcomes"
+        - "Add DevHUD filter to preview Biome 2 events"
+        - "Ensure event outcome effects are biome-safe (no missing refs)"
+      notes: |-
+        ### Milestone required
+        GitHub issue forms can’t truly force milestone selection, but our DoD can:
+        **No milestone = not Ready.**
+
+  - title: "EPIC: M3 — Cross-biome progression (unlock/transition/UX)"
+    labels: ["type:epic", "area:ui", "estimate:M", "risk:M"]
+    area: ui
+    estimate: M
+    risk: M
+    body:
+      goal: "Make cross-biome progression understandable: transitions, unlocks, and carry-over rules are clear."
+      acceptance_criteria:
+        - "On escape/prestige, transition to Biome 2 is supported (or unlock choice)."
+        - "Player sees what carries over (bonuses/unlocks)."
+        - "Biome selection (if offered) is deterministic and save/load safe."
+        - "No broken state when transitioning mid-save/autosave."
+      in_scope:
+        - "Transition flow + UI panel."
+        - "Carry-over rules presentation."
+        - "Optional biome selection screen."
+      out_of_scope:
+        - "Meta progression overhaul (M4+)."
+        - "Monetization systems."
+      child_issue_checklist:
+        - "Define carry-over rules for Biome 2 transition (what persists)"
+        - "Add transition UX (panel) showing biome unlocked + carry-over"
+        - "Optional biome selection screen (if multiple unlocked)"
+        - "Save/Load around transition (autosave + resume) is robust"
+      notes: |-
+        ### Milestone required
+        GitHub issue forms can’t truly force milestone selection, but our DoD can:
+        **No milestone = not Ready.**
+
+  - title: "EPIC: M3 — Systems hardening (save migration + testing + perf)"
+    labels: ["type:epic", "area:build-ci", "estimate:M", "risk:M"]
+    area: build-ci
+    estimate: M
+    risk: M
+    body:
+      goal: "Harden multi-biome systems: save migration, determinism checks, and performance sanity."
+      acceptance_criteria:
+        - "Save schema migrates cleanly (v1->v2) when adding biomes/hazard v2."
+        - "Determinism sanity tests cover Biome 2 gen + hazard v2."
+        - "No major perf regressions vs M2 baseline."
+        - "Docs updated for Biome 2 dev/testing workflow."
+      in_scope:
+        - "Save migration strategy and tests."
+        - "Determinism checks (CI or manual)."
+        - "Performance baseline capture and follow-ups."
+      out_of_scope:
+        - "Full automated playtest bots."
+        - "Mobile perf budget enforcement (M4)."
+      child_issue_checklist:
+        - "Bump save schema + add migration (biome id, hazard v2 state)"
+        - "Add determinism tests for Biome 2 generation + hazard v2"
+        - "Add CI job to run lightweight validation tests (optional)"
+        - "Profiler spot-check on Biome 2 (normal + fast sim) + notes"
+        - "Docs/Biome2.md (how to run, debug, tune)"
+      notes: |-
+        ### Milestone required
+        GitHub issue forms can’t truly force milestone selection, but our DoD can:
+        **No milestone = not Ready.**

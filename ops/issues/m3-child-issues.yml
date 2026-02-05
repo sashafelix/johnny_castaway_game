@@ -1,0 +1,549 @@
+milestone_number: 4
+milestone: "M3 – Biome 2 Systems"
+issues:
+  - type: feature
+    title: "feat: Add biome identifier to run state + seed derivation"
+    raw_title: "Add biome identifier to run state + seed derivation"
+    parent_epic: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:feature", "area:systems", "sys:core", "estimate:S", "risk:M"]
+    area: systems
+    estimate: S
+    risk: M
+    body:
+      what: "Add biome_id to run/session state and derive deterministic RNG streams using (worldSeed, biome_id)."
+      why: "Biome identity must be reproducible for debugging and fairness."
+      definition_of_done:
+        - "Biome id persisted in run + save state"
+        - "Biome-scoped RNG streams implemented"
+        - "Same seed+biome yields identical results"
+      system: core
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Implement Biome 2 generator parameters (size, densities, terrain bias)"
+    raw_title: "Implement Biome 2 generator parameters (size, densities, terrain bias)"
+    parent_epic: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:feature", "area:systems", "sys:worldgen", "estimate:M", "risk:M"]
+    area: systems
+    estimate: M
+    risk: M
+    body:
+      what: "Expose biome-specific generator parameters and wire them into island gen."
+      why: "Biome 2 should feel different and be tunable quickly."
+      definition_of_done:
+        - "Biome 2 params exist (config/data-driven)"
+        - "Generator uses params when biome_id=2"
+        - "Determinism verified for same seed"
+      system: worldgen
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Add Biome 2 terrain types (at least 2 new types) + rules"
+    raw_title: "Add Biome 2 terrain types (at least 2 new types) + rules"
+    parent_epic: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:feature", "area:systems", "sys:worldgen", "estimate:M", "risk:M"]
+    area: systems
+    estimate: M
+    risk: M
+    body:
+      what: "Introduce 2 new terrain types and update placement constraints."
+      why: "Terrain differentiation makes Biome 2 unique."
+      definition_of_done:
+        - "Two terrain types integrated end-to-end"
+        - "Placement rules updated"
+        - "No invalid placements in quick seed sweep"
+      system: worldgen
+      priority: "P2"
+
+  - type: feature
+    title: "feat: Implement biome modifiers system (3 modifiers) (data-driven)"
+    raw_title: "Implement biome modifiers system (3 modifiers) (data-driven)"
+    parent_epic: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:feature", "area:systems", "sys:worldgen", "estimate:M", "risk:M"]
+    area: systems
+    estimate: M
+    risk: M
+    body:
+      what: "Add data-driven modifiers impacting gen/economy/hazards."
+      why: "Modifiers increase replayability without extra biomes."
+      definition_of_done:
+        - "Modifier data format exists"
+        - "At least 3 modifiers implemented"
+        - "Modifiers visible in summary/DevHUD"
+      system: worldgen
+      priority: "P2"
+
+  - type: bug
+    title: "bug: Ensure spawn/camp placement never lands on invalid tiles (Biome 2)"
+    raw_title: "Ensure spawn/camp placement never lands on invalid tiles (Biome 2)"
+    parent_epic: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:bug", "area:systems", "sys:worldgen", "estimate:S", "risk:M"]
+    area: systems
+    estimate: S
+    risk: M
+    body:
+      what: "Fix placement edge cases on new terrain/modifiers."
+      why: "Bad spawns break trust and runs."
+      definition_of_done:
+        - "Placement valid across 100+ random seeds"
+        - "Fallback search exists"
+        - "No placement exceptions"
+      system: worldgen
+      priority: "P1"
+
+  - type: chore
+    title: "chore: Add DevHUD toggle to start run directly in Biome 2"
+    raw_title: "Add DevHUD toggle to start run directly in Biome 2"
+    parent_epic: "EPIC: M3 — Biome 2 ruleset (generation + modifiers)"
+    labels: ["type:chore", "area:tooling", "sys:tooling", "estimate:S", "risk:L"]
+    area: tooling
+    estimate: S
+    risk: L
+    body:
+      chore_type: "tooling (scripts, CI, automation)"
+      what: "Add a debug option to start/restart in Biome 2."
+      why: "Iteration speed."
+      definition_of_done:
+        - "DevHUD control exists"
+        - "Does not corrupt state"
+        - "Dev-only gated"
+      system: tooling
+      priority: "P3"
+
+  - type: feature
+    title: "feat: Choose Hazard v2 concept + write short spec (rules, meters, failure)"
+    raw_title: "Choose Hazard v2 concept + write short spec (rules, meters, failure)"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:feature", "area:systems", "sys:hazards", "estimate:S", "risk:H"]
+    area: systems
+    estimate: S
+    risk: H
+    body:
+      what: "Pick hazard v2 and document rules/meters/failure and mitigations."
+      why: "A small spec prevents chaos."
+      definition_of_done:
+        - "Docs/HazardV2.md exists"
+        - "State diagram included"
+        - "3 mitigations listed"
+      system: hazards
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Implement hazard v2 state machine + tick integration"
+    raw_title: "Implement hazard v2 state machine + tick integration"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:feature", "area:systems", "sys:hazards", "estimate:M", "risk:H"]
+    area: systems
+    estimate: M
+    risk: H
+    body:
+      what: "Implement hazard v2 progression in tick sim."
+      why: "Must be deterministic and stable."
+      definition_of_done:
+        - "Tick-driven updates"
+        - "Saved/loaded state included"
+        - "Effects consistent"
+      system: hazards
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Add hazard v2 UI cues (meter/alerts/telegraph states)"
+    raw_title: "Add hazard v2 UI cues (meter/alerts/telegraph states)"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:feature", "area:ui", "sys:ui", "estimate:M", "risk:M"]
+    area: ui
+    estimate: M
+    risk: M
+    body:
+      what: "Add UI to show hazard v2 status and warnings."
+      why: "Fairness and clarity."
+      definition_of_done:
+        - "Meter/alerts exist"
+        - "Warnings before failure"
+        - "No HUD regressions"
+      system: ui
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Add 3 mitigation options for hazard v2 (upgrade/item/behavior)"
+    raw_title: "Add 3 mitigation options for hazard v2 (upgrade/item/behavior)"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:feature", "area:systems", "sys:hazards", "estimate:M", "risk:M"]
+    area: systems
+    estimate: M
+    risk: M
+    body:
+      what: "Implement upgrade + consumable + behavior mitigation."
+      why: "Counterplay makes it interesting."
+      definition_of_done:
+        - "3 mitigations implemented"
+        - "Costs/tradeoffs clear"
+        - "Deterministic behavior verified"
+      system: hazards
+      priority: "P1"
+
+  - type: chore
+    title: "chore: Tune hazard v2 baseline parameters (Biome 2)"
+    raw_title: "Tune hazard v2 baseline parameters (Biome 2)"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:chore", "area:balance", "sys:hazards", "estimate:S", "risk:M"]
+    area: balance
+    estimate: S
+    risk: M
+    body:
+      chore_type: "project hygiene / content authoring"
+      what: "Tune baseline numbers for Biome 2 curve."
+      why: "Numbers define feel."
+      definition_of_done:
+        - "Targets recorded"
+        - "5+ tweaks w/ notes"
+        - "Feels fair in playtests"
+      system: hazards
+      priority: "P2"
+
+  - type: feature
+    title: "feat: Add 2 events that interact with hazard v2 (buff/debuff)"
+    raw_title: "Add 2 events that interact with hazard v2 (buff/debuff)"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:feature", "area:content", "sys:events", "estimate:S", "risk:M"]
+    area: content
+    estimate: S
+    risk: M
+    body:
+      what: "Author 2 events affecting hazard v2 progression."
+      why: "System interactions create variety."
+      definition_of_done:
+        - "2 events created"
+        - "Effects visible"
+        - "Save/load stable"
+      system: events
+      priority: "P2"
+
+  - type: bug
+    title: "bug: Fairness pass on hazard v2 game-over (warnings + grace)"
+    raw_title: "Fairness pass on hazard v2 game-over (warnings + grace)"
+    parent_epic: "EPIC: M3 — Hazard v2 (new mechanic + counterplay)"
+    labels: ["type:bug", "area:systems", "sys:hazards", "estimate:S", "risk:M"]
+    area: systems
+    estimate: S
+    risk: M
+    body:
+      what: "Add warnings/grace to prevent surprise deaths."
+      why: "Unfair deaths are rage-quits."
+      definition_of_done:
+        - "Warnings exist"
+        - "Grace window (if used) works"
+        - "No determinism regressions"
+      system: hazards
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Add 2 Biome 2 resource nodes (spawn rules + gather effects)"
+    raw_title: "Add 2 Biome 2 resource nodes (spawn rules + gather effects)"
+    parent_epic: "EPIC: M3 — Biome 2 economy & resources (new nodes + tuning)"
+    labels: ["type:feature", "area:content", "sys:resources", "estimate:M", "risk:M"]
+    area: content
+    estimate: M
+    risk: M
+    body:
+      what: "Implement 2 new nodes with deterministic spawns and yields."
+      why: "Biome 2 needs new levers and supports mitigations."
+      definition_of_done:
+        - "2 nodes integrated"
+        - "Deterministic spawns"
+        - "Shown in UI/summary"
+      system: resources
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Add biome-specific BalanceConfig overrides (rates/costs/hazard params)"
+    raw_title: "Add biome-specific BalanceConfig overrides (rates/costs/hazard params)"
+    parent_epic: "EPIC: M3 — Biome 2 economy & resources (new nodes + tuning)"
+    labels: ["type:feature", "area:balance", "sys:balance", "estimate:S", "risk:M"]
+    area: balance
+    estimate: S
+    risk: M
+    body:
+      what: "Support per-biome overrides in BalanceConfig."
+      why: "Keep tuning data-driven."
+      definition_of_done:
+        - "Overrides load by biome"
+        - "6+ params overridden"
+        - "Fallback works"
+      system: balance
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Extend run stats for Biome 2 KPIs (node yields, scarcity)"
+    raw_title: "Extend run stats for Biome 2 KPIs (node yields, scarcity)"
+    parent_epic: "EPIC: M3 — Biome 2 economy & resources (new nodes + tuning)"
+    labels: ["type:feature", "area:balance", "sys:telemetry", "estimate:S", "risk:M"]
+    area: balance
+    estimate: S
+    risk: M
+    body:
+      what: "Add Biome 2 KPIs to summary/DevHUD."
+      why: "Balance needs measurements."
+      definition_of_done:
+        - "KPIs present"
+        - "Save/load stable"
+        - "Useful for tuning"
+      system: telemetry
+      priority: "P2"
+
+  - type: chore
+    title: "chore: Balance pass for Biome 2 economy targets"
+    raw_title: "Balance pass for Biome 2 economy targets"
+    parent_epic: "EPIC: M3 — Biome 2 economy & resources (new nodes + tuning)"
+    labels: ["type:chore", "area:balance", "sys:balance", "estimate:M", "risk:M"]
+    area: balance
+    estimate: M
+    risk: M
+    body:
+      chore_type: "project hygiene / content authoring"
+      what: "Tune Biome 2 economy curve."
+      why: "Harder but not impossible."
+      definition_of_done:
+        - "Targets defined"
+        - "5+ tweaks"
+        - "No runaway/softlocks"
+      system: balance
+      priority: "P2"
+
+  - type: feature
+    title: "feat: Add biome tagging/gating for events (Biome 2 only)"
+    raw_title: "Add biome tagging/gating for events (Biome 2 only)"
+    parent_epic: "EPIC: M3 — Biome 2 events pack (content + interactions)"
+    labels: ["type:feature", "area:content", "sys:events", "estimate:S", "risk:M"]
+    area: content
+    estimate: S
+    risk: M
+    body:
+      what: "Add biome gating in event defs + scheduler support."
+      why: "No wrong-biome events."
+      definition_of_done:
+        - "Defs support biome tags"
+        - "Scheduler respects tags"
+        - "No leakage"
+      system: events
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Implement 6 Biome 2 events + outcomes"
+    raw_title: "Implement 6 Biome 2 events + outcomes"
+    parent_epic: "EPIC: M3 — Biome 2 events pack (content + interactions)"
+    labels: ["type:feature", "area:content", "sys:events", "estimate:M", "risk:M"]
+    area: content
+    estimate: M
+    risk: M
+    body:
+      what: "Author 6 Biome 2 events with meaningful choices."
+      why: "Content depth."
+      definition_of_done:
+        - "6 events exist"
+        - "2+ outcomes each"
+        - "Deterministic + save/load safe"
+      system: events
+      priority: "P1"
+
+  - type: chore
+    title: "chore: Add DevHUD filter to preview Biome 2 events"
+    raw_title: "Add DevHUD filter to preview Biome 2 events"
+    parent_epic: "EPIC: M3 — Biome 2 events pack (content + interactions)"
+    labels: ["type:chore", "area:tooling", "sys:tooling", "estimate:S", "risk:L"]
+    area: tooling
+    estimate: S
+    risk: L
+    body:
+      chore_type: "tooling (scripts, CI, automation)"
+      what: "Add DevHUD filter/trigger tools for Biome 2 events."
+      why: "Speed iteration."
+      definition_of_done:
+        - "Filter exists"
+        - "Trigger works"
+        - "No errors"
+      system: tooling
+      priority: "P3"
+
+  - type: bug
+    title: "bug: Ensure event outcome effects are biome-safe (no missing refs)"
+    raw_title: "Ensure event outcome effects are biome-safe (no missing refs)"
+    parent_epic: "EPIC: M3 — Biome 2 events pack (content + interactions)"
+    labels: ["type:bug", "area:systems", "sys:events", "estimate:S", "risk:M"]
+    area: systems
+    estimate: S
+    risk: M
+    body:
+      what: "Validate event outcomes reference valid ids/resources/upgrades."
+      why: "Avoid silent failures."
+      definition_of_done:
+        - "No invalid refs"
+        - "Validation catches errors"
+        - "Regression run passes"
+      system: events
+      priority: "P2"
+
+  - type: feature
+    title: "feat: Define carry-over rules for Biome 2 transition (what persists)"
+    raw_title: "Define carry-over rules for Biome 2 transition (what persists)"
+    parent_epic: "EPIC: M3 — Cross-biome progression (unlock/transition/UX)"
+    labels: ["type:feature", "area:systems", "sys:core", "estimate:S", "risk:M"]
+    area: systems
+    estimate: S
+    risk: M
+    body:
+      what: "Define what persists across transition."
+      why: "Predictable progression."
+      definition_of_done:
+        - "Rules documented"
+        - "Implemented"
+        - "Shown in UI"
+      system: core
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Add transition UX (panel) showing biome unlocked + carry-over"
+    raw_title: "Add transition UX (panel) showing biome unlocked + carry-over"
+    parent_epic: "EPIC: M3 — Cross-biome progression (unlock/transition/UX)"
+    labels: ["type:feature", "area:ui", "sys:ui", "estimate:M", "risk:M"]
+    area: ui
+    estimate: M
+    risk: M
+    body:
+      what: "Add panel showing next biome + carry-over."
+      why: "Explain the reset/advance."
+      definition_of_done:
+        - "Panel works"
+        - "Copy is clear"
+        - "Flow correct"
+      system: ui
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Optional biome selection screen (if multiple unlocked)"
+    raw_title: "Optional biome selection screen (if multiple unlocked)"
+    parent_epic: "EPIC: M3 — Cross-biome progression (unlock/transition/UX)"
+    labels: ["type:feature", "area:ui", "sys:ui", "estimate:M", "risk:L"]
+    area: ui
+    estimate: M
+    risk: L
+    body:
+      what: "Add selection screen for future multi-biome choice."
+      why: "Future-proofing."
+      definition_of_done:
+        - "Works when 2+ biomes unlocked"
+        - "Selection saved"
+        - "Sane defaults"
+      system: ui
+      priority: "P3"
+
+  - type: bug
+    title: "bug: Save/Load around transition (autosave + resume) is robust"
+    raw_title: "Save/Load around transition (autosave + resume) is robust"
+    parent_epic: "EPIC: M3 — Cross-biome progression (unlock/transition/UX)"
+    labels: ["type:bug", "area:core", "sys:save-load", "estimate:M", "risk:H"]
+    area: core
+    estimate: M
+    risk: H
+    body:
+      what: "Fix autosave/quit edge cases during transition."
+      why: "High-risk save corruption zone."
+      definition_of_done:
+        - "Autosave safe"
+        - "Resume correct state"
+        - "No duplicates"
+      system: save-load
+      priority: "P1"
+
+  - type: feature
+    title: "feat: Bump save schema + add migration (biome id, hazard v2 state)"
+    raw_title: "Bump save schema + add migration (biome id, hazard v2 state)"
+    parent_epic: "EPIC: M3 — Systems hardening (save migration + testing + perf)"
+    labels: ["type:feature", "area:core", "sys:save-load", "estimate:M", "risk:H"]
+    area: core
+    estimate: M
+    risk: H
+    body:
+      what: "Bump save version and migrate older saves."
+      why: "Don’t brick saves."
+      definition_of_done:
+        - "Migration tested"
+        - "Old saves load"
+        - "Defaults sensible"
+      system: save-load
+      priority: "P1"
+
+  - type: tech-debt
+    title: "tech-debt: Add determinism tests for Biome 2 generation + hazard v2"
+    raw_title: "Add determinism tests for Biome 2 generation + hazard v2"
+    parent_epic: "EPIC: M3 — Systems hardening (save migration + testing + perf)"
+    labels: ["type:tech-debt", "area:build-ci", "sys:testing", "estimate:M", "risk:M"]
+    area: build-ci
+    estimate: M
+    risk: M
+    body:
+      what: "Add lightweight determinism tests."
+      why: "Catch subtle bugs early."
+      definition_of_done:
+        - "2+ tests exist"
+        - "Runnable locally"
+        - "Actionable logs"
+      system: testing
+      priority: "P2"
+
+  - type: chore
+    title: "chore: Add CI job to run lightweight validation tests (optional)"
+    raw_title: "Add CI job to run lightweight validation tests (optional)"
+    parent_epic: "EPIC: M3 — Systems hardening (save migration + testing + perf)"
+    labels: ["type:chore", "area:build-ci", "sys:build-ci", "estimate:S", "risk:L"]
+    area: build-ci
+    estimate: S
+    risk: L
+    body:
+      chore_type: "tooling (scripts, CI, automation)"
+      what: "Optional CI validation job."
+      why: "Prevent regressions."
+      definition_of_done:
+        - "Job quick"
+        - "Non-flaky"
+        - "Visible in PR checks"
+      system: build-ci
+      priority: "P3"
+
+  - type: chore
+    title: "chore: Profiler spot-check on Biome 2 (normal + fast sim) + notes"
+    raw_title: "Profiler spot-check on Biome 2 (normal + fast sim) + notes"
+    parent_epic: "EPIC: M3 — Systems hardening (save migration + testing + perf)"
+    labels: ["type:chore", "area:performance", "sys:performance", "estimate:S", "risk:M"]
+    area: performance
+    estimate: S
+    risk: M
+    body:
+      chore_type: "project hygiene / content authoring"
+      what: "Capture perf notes and hotspots."
+      why: "Keep complexity under control."
+      definition_of_done:
+        - "Notes recorded"
+        - "Hotspots filed"
+        - "No catastrophic GC"
+      system: performance
+      priority: "P2"
+
+  - type: chore
+    title: "chore: Docs/Biome2.md (how to run, debug, tune)"
+    raw_title: "Docs/Biome2.md (how to run, debug, tune)"
+    parent_epic: "EPIC: M3 — Systems hardening (save migration + testing + perf)"
+    labels: ["type:chore", "area:docs", "sys:docs", "estimate:S", "risk:L"]
+    area: docs
+    estimate: S
+    risk: L
+    body:
+      chore_type: "project hygiene / content authoring"
+      what: "Write Biome 2 dev doc."
+      why: "Make future work easier."
+      definition_of_done:
+        - "Doc exists"
+        - "Includes steps"
+        - "Links to hazard/balance docs"
+      system: docs
+      priority: "P2"
