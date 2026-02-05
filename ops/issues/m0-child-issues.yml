@@ -868,3 +868,4 @@ issues:
       system: sys:ui
       priority: p2
       notes: 'Parent Epic: EPIC: M0 — Debug + telemetry basics (dev UI + logging)'
+milestone_number: 1

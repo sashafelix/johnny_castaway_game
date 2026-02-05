@@ -35,8 +35,8 @@ jobs:
           ls -la ops || true
           echo "ops/issues:"
           ls -la ops/issues || true
-          echo "Find child issues YAML:"
-          find . -maxdepth 6 -type f -name "*child-issues*.yml" -print
+          echo "Find YAML candidates:"
+          find . -maxdepth 6 -type f \( -name "*.yml" -o -name "*.yaml" \) -print
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -58,49 +58,58 @@ jobs:
             const updateEpic = ((core.getInput("update_parent_epic_checklists") || "true").trim() === "true");
 
             core.info(`Input YAML path: "${yamlPath}"`);
-            core.info(`Update parent epic checklists: ${updateEpic}`);
+            core.info(`Update epic checklists: ${updateEpic}`);
 
             if (!yamlPath) {
               core.setFailed('Input "file" is empty');
               return;
             }
-
             if (!fs.existsSync(yamlPath)) {
               core.setFailed(`YAML file not found: ${yamlPath}`);
               return;
             }
 
             const doc = yaml.load(fs.readFileSync(yamlPath, "utf8"));
+            const milestoneNumber = doc.milestone_number;
             const milestoneTitle = doc.milestone;
             const issues = doc.issues || [];
 
-            if (!milestoneTitle) {
-              core.setFailed("Missing top-level 'milestone' in YAML");
+            if (!milestoneNumber && !milestoneTitle) {
+              core.setFailed("YAML must include either 'milestone_number' or 'milestone'.");
               return;
             }
 
-            // ---- Find milestone by exact title
-            const milestones = await github.paginate(github.rest.issues.listMilestones, {
-              ...context.repo,
-              state: "all",
-              per_page: 100,
-            });
-            const ms = milestones.find(m => m.title === milestoneTitle);
-            if (!ms) {
-              core.setFailed(`Milestone not found (must match exactly): "${milestoneTitle}"`);
-              return;
+            // Resolve milestone number (prefer milestone_number)
+            let msNumber = milestoneNumber;
+            let msTitleForLog = milestoneTitle || `(by number ${milestoneNumber})`;
+
+            if (!msNumber) {
+              const milestones = await github.paginate(github.rest.issues.listMilestones, {
+                ...context.repo,
+                state: "all",
+                per_page: 100,
+              });
+              const ms = milestones.find(m => m.title === milestoneTitle);
+              if (!ms) {
+                core.setFailed(`Milestone not found (must match exactly): "${milestoneTitle}"`);
+                return;
+              }
+              msNumber = ms.number;
+              msTitleForLog = ms.title;
             }
-            core.info(`Using milestone #${ms.number}: ${ms.title}`);
+
+            core.info(`Using milestone #${msNumber}: ${msTitleForLog}`);
+            core.info(`Issues in YAML: ${issues.length}`);
 
             // ---- Helpers
             async function issueExistsExactTitle(title) {
-              const q = `repo:${context.repo.owner}/${context.repo.repo} is:issue in:title "${title.replace(/"/g, '\\"')}"`;
+              const q = `repo:${context.repo.owner}/${context.repo.repo} is:issue in:title "${title.replace(/"/g, '\"')}"`;
               const res = await github.rest.search.issuesAndPullRequests({ q, per_page: 50 });
               return res.data.items.some(i => i.title === title);
             }
 
             function mdChecklist(items) {
-              if (!items || items.length === 0) return "";
+              if (!items || items.length === 0) return "_(none)_";
               return items.map(x => `- [ ] ${x}`).join("\n");
             }
 
@@ -108,7 +117,7 @@ jobs:
               const b = item.body || {};
               const out = [];
 
-              // Align to your templates: Feature/Chore etc. (forms can't be filled, but body matches fields)
+              // Matches your templates (as content in the body)
               if (item.type === "chore") {
                 out.push(`## Chore type\n${b.chore_type || "tooling (scripts, CI, automation)"}\n`);
               }
@@ -119,9 +128,7 @@ jobs:
               out.push(`## System\n${b.system || ""}\n`);
               out.push(`## Priority\n${b.priority || ""}\n`);
 
-              if (b.notes) {
-                out.push(`## Notes / links\n${b.notes}\n`);
-              }
+              if (b.notes) out.push(`## Notes / links\n${b.notes}\n`);
 
               if (item.parent_epic) {
                 if (epicNumberOrNull) out.push(`## Parent Epic\n- #${epicNumberOrNull}\n`);
@@ -134,10 +141,8 @@ jobs:
 
             async function findEpicByTitle(title) {
               if (!title) return null;
-              const q = `repo:${context.repo.owner}/${context.repo.repo} is:issue label:"type:epic" in:title "${title.replace(/"/g, '\\"')}"`;
+              const q = `repo:${context.repo.owner}/${context.repo.repo} is:issue label:"type:epic" in:title "${title.replace(/"/g, '\"')}"`;
               const res = await github.rest.search.issuesAndPullRequests({ q, per_page: 10 });
-
-              // prefer exact title match
               const exact = res.data.items.find(i => i.title === title);
               return exact || res.data.items[0] || null;
             }
@@ -151,6 +156,7 @@ jobs:
               const body = epic.body || "";
               const re = new RegExp(`^- \\[ \\] ${escapeRegex(rawTitle)}\\s*$`, "m");
 
+              // If checklist isn't in that exact format, don't fail the run.
               if (!re.test(body)) return false;
 
               const updated = body.replace(re, `- [ ] #${createdNum} ${rawTitle}`);
@@ -161,9 +167,6 @@ jobs:
               });
               return true;
             }
-
-            // ---- Create issues
-            core.info(`Importing ${issues.length} issues...`);
 
             let createdCount = 0;
             let skippedCount = 0;
@@ -178,7 +181,6 @@ jobs:
                 continue;
               }
 
-              // Find parent epic (optional)
               let epic = null;
               if (item.parent_epic) {
                 epic = await findEpicByTitle(item.parent_epic);
@@ -189,18 +191,16 @@ jobs:
                 ...context.repo,
                 title,
                 body: buildBody(item, epic ? epic.number : null),
-                milestone: ms.number,
+                milestone: msNumber,
                 labels: item.labels || [],
               });
 
               createdCount++;
               core.info(`Created #${created.data.number}: ${title}`);
 
-              // Update epic checklist line "- [ ] raw_title" -> "- [ ] #123 raw_title"
               if (updateEpic && epic && item.raw_title) {
                 const ok = await linkIntoEpicChecklist(epic, item.raw_title, created.data.number);
                 if (ok) core.info(`Updated epic checklist: ${epic.title} <- #${created.data.number}`);
-                else core.info(`No matching checklist line in epic for raw_title: "${item.raw_title}"`);
               }
             }
 
