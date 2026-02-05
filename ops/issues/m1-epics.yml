@@ -1,11 +1,6 @@
 milestone_number: 2
 issues:
   - title: 'EPIC: M1 — Run loop + bootstrap (game entry + session)'
-    raw_title: M1 — Run loop + bootstrap (game entry + session)
-    type: epic
-    area: Sim
-    estimate: L
-    risk: Med
     labels:
       - type:epic
       - area:sim
@@ -30,22 +25,12 @@ issues:
         - Complex character controller/pathfinding
         - Advanced analytics/telemetry pipeline
       child_issue_checklist:
-        - '- [ ] feat: Create GameRoot scene + bootstrap flow (MainMenu -> Run)'
-        - '- [ ] feat: Implement run session state machine (Boot/Running/Paused/GameOver)'
-        - '- [ ] chore: Add simple input map for pause + speed controls (1x/2x/4x)'
-        - '- [ ] chore: Add basic scene loading guardrails (singletons, duplicate prevention)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
+        - 'feat: Create GameRoot scene + bootstrap flow (MainMenu -> Run)'
+        - 'feat: Implement run session state machine (Boot/Running/Paused/GameOver)'
+        - 'chore: Add simple input map for pause + speed controls (1x/2x/4x)'
+        - 'chore: Add basic scene loading guardrails (singletons, duplicate prevention)'
       notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
   - title: 'EPIC: M1 — Seeded island gen v0 (tiles/heightmap)'
-    raw_title: M1 — Seeded island gen v0 (tiles/heightmap)
-    type: epic
-    area: Sim
-    estimate: L
-    risk: Med
     labels:
       - type:epic
       - area:sim
@@ -67,26 +52,16 @@ issues:
         - Resource node placement (wood/food/scrap)
         - Spawn + camp anchor rules
       out_of_scope:
-        - Biome variety (that’s M2/M3)
+        - Biome variety (M2/M3)
         - Pathfinding/navmesh
         - Fancy art assets
       child_issue_checklist:
-        - '- [ ] feat: Define world seed format + deterministic RNG utilities'
-        - '- [ ] feat: Implement island grid v0 (tilemap or logical grid) with basic terrain types'
-        - '- [ ] feat: Add spawn rules for Johnny + initial camp location (safe tile)'
-        - '- [ ] feat: Place resource nodes v0 (wood/food/scrap) with seeded distribution'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'feat: Define world seed format + deterministic RNG utilities'
+        - 'feat: Implement island grid v0 (tilemap or logical grid) with basic terrain types'
+        - 'feat: Add spawn rules for Johnny + initial camp location (safe tile)'
+        - 'feat: Place resource nodes v0 (wood/food/scrap) with seeded distribution'
+      notes: ''
   - title: 'EPIC: M1 — Tick simulation (time/resources/progression)'
-    raw_title: M1 — Tick simulation (time/resources/progression)
-    type: epic
-    area: Sim
-    estimate: XL
-    risk: Med
     labels:
       - type:epic
       - area:sim
@@ -107,30 +82,21 @@ issues:
         - Upgrade system v0 (3 upgrades)
         - Work assignment v0 (no pathing)
         - Runtime config asset for tuning key parameters
+        - Run stats tracking (days/resources/upgrades)
       out_of_scope:
         - Deep balancing
         - Multiple workers/agents
         - Complex crafting trees
       child_issue_checklist:
-        - '- [ ] feat: Create time/tick service (fixed tick) decoupled from Unity Update'
-        - '- [ ] feat: Implement resource economy v0 (wood/food/scrap) with income/decay'
-        - '- [ ] feat: Add upgrade system v0 (simple costs + effects) for 3 upgrades'
-        - '- [ ] feat: Add ''work assignment'' v0 (auto-gather from nearby nodes)'
-        - '- [ ] config: Add run config asset (tick rate, island size, densities) with defaults'
-        - '- [ ] feat: Add run stats tracking (days survived, resources earned, upgrades bought)'
-        - '- [ ] tech-debt: Refactor data defs into ScriptableObjects (Upgrades, Resources)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'feat: Create time/tick service (fixed tick) decoupled from Unity Update'
+        - 'feat: Implement resource economy v0 (wood/food/scrap) with income/decay'
+        - 'feat: Add upgrade system v0 (simple costs + effects) for 3 upgrades'
+        - 'feat: Add ''work assignment'' v0 (auto-gather from nearby nodes)'
+        - 'config: Add run config asset (tick rate, island size, densities) with defaults'
+        - 'feat: Add run stats tracking (days survived, resources earned, upgrades bought)'
+        - 'tech-debt: Refactor data defs into ScriptableObjects (Upgrades, Resources)'
+      notes: ''
   - title: 'EPIC: M1 — Save/Load v0 (resume reliable)'
-    raw_title: M1 — Save/Load v0 (resume reliable)
-    type: epic
-    area: Save
-    estimate: L
-    risk: Med
     labels:
       - type:epic
       - area:save
@@ -154,21 +120,11 @@ issues:
         - Cloud saves
         - Compression/encryption
       child_issue_checklist:
-        - '- [ ] feat: Define save schema v0 for run state (versioned)'
-        - '- [ ] feat: Implement save to disk + load from disk (single slot v0)'
-        - '- [ ] feat: Add autosave cadence (every N ticks / on important events)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'feat: Define save schema v0 for run state (versioned)'
+        - 'feat: Implement save to disk + load from disk (single slot v0)'
+        - 'feat: Add autosave cadence (every N ticks / on important events)'
+      notes: ''
   - title: 'EPIC: M1 — Hazard v1 (one mechanic that matters)'
-    raw_title: M1 — Hazard v1 (one mechanic that matters)
-    type: epic
-    area: Sim
-    estimate: L
-    risk: Med
     labels:
       - type:epic
       - area:sim
@@ -193,22 +149,12 @@ issues:
         - Complex event chains
         - Biome-specific hazards
       child_issue_checklist:
-        - '- [ ] feat: Choose hazard mechanic v1 and spec it (storm / hunger / heat)'
-        - '- [ ] feat: Implement hazard state + tick integration (v1)'
-        - '- [ ] feat: Add one mitigation upgrade/item that counters hazard (v1)'
-        - '- [ ] feat: Add simple ''game over'' condition (starvation / hazard failure)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'feat: Choose hazard mechanic v1 and spec it (storm / hunger / heat)'
+        - 'feat: Implement hazard state + tick integration (v1)'
+        - 'feat: Add one mitigation upgrade/item that counters hazard (v1)'
+        - 'feat: Add simple ''game over'' condition (starvation / hazard failure)'
+      notes: ''
   - title: 'EPIC: M1 — Minimal UI (DevHUD -> Player HUD)'
-    raw_title: M1 — Minimal UI (DevHUD -> Player HUD)
-    type: epic
-    area: UI
-    estimate: L
-    risk: Med
     labels:
       - type:epic
       - area:ui
@@ -235,24 +181,14 @@ issues:
         - Full art pass / animations
         - Accessibility deep pass
       child_issue_checklist:
-        - '- [ ] feat: Replace DevHUD-only with minimal player HUD (resources + time + hazard)'
-        - '- [ ] feat: Add upgrade screen/panel v0 (list, cost, buy button)'
-        - '- [ ] feat: Add run summary panel (seed, days survived, key stats)'
-        - '- [ ] feat: Add pause menu v0 (resume, save, quit)'
-        - '- [ ] feat: Add simple notification/toast system (e.g., ''Saved'', ''Hazard active'')'
-        - '- [ ] feat: Add basic audio toggle + placeholder SFX hooks (upgrade buy, hazard)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'feat: Replace DevHUD-only with minimal player HUD (resources + time + hazard)'
+        - 'feat: Add upgrade screen/panel v0 (list, cost, buy button)'
+        - 'feat: Add run summary panel (seed, days survived, key stats)'
+        - 'feat: Add pause menu v0 (resume, save, quit)'
+        - 'feat: Add simple notification/toast system (e.g., ''Saved'', ''Hazard active'')'
+        - 'feat: Add basic audio toggle + placeholder SFX hooks (upgrade buy, hazard)'
+      notes: ''
   - title: 'EPIC: M1 — Escape + prestige (reset with carry-over)'
-    raw_title: M1 — Escape + prestige (reset with carry-over)
-    type: epic
-    area: Sim
-    estimate: XL
-    risk: Med
     labels:
       - type:epic
       - area:sim
@@ -277,22 +213,12 @@ issues:
         - Meta-progression trees
         - Biome 2/3 progression (M2/M3)
       child_issue_checklist:
-        - '- [ ] feat: Define escape win condition v0 (boat/raft progress bar)'
-        - '- [ ] feat: Implement escape progress system v0 (craft parts over time)'
-        - '- [ ] feat: Implement prestige v0 (on escape: reset run but keep one bonus)'
-        - '- [ ] feat: Add ''new island'' transition v0 (simple cut + new gen)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'feat: Define escape win condition v0 (boat/raft progress bar)'
+        - 'feat: Implement escape progress system v0 (craft parts over time)'
+        - 'feat: Implement prestige v0 (on escape: reset run but keep one bonus)'
+        - 'feat: Add ''new island'' transition v0 (simple cut + new gen)'
+      notes: ''
   - title: 'EPIC: M1 — Vertical slice hardening (stability/perf/docs)'
-    raw_title: M1 — Vertical slice hardening (stability/perf/docs)
-    type: epic
-    area: Build
-    estimate: L
-    risk: Med
     labels:
       - type:epic
       - area:build
@@ -301,10 +227,9 @@ issues:
       - sys:build-ci
       - p1
     body:
-      goal: The slice is stable, reproducible, testable, and documented enough that Future You (or collaborators) can pick it
-        up quickly.
+      goal: The slice is stable, reproducible, testable, and documented enough that Future You can pick it up quickly.
       acceptance_criteria:
-        - Basic determinism tests exist (seeded gen + tick)
+        - Basic determinism sanity tests exist (seeded gen + tick)
         - Performance counters visible in DevHUD
         - Vertical slice documentation exists and is linked from README
         - No play-mode re-entry issues or duplicate managers
@@ -318,14 +243,9 @@ issues:
         - Full QA matrix
         - Release packaging
       child_issue_checklist:
-        - '- [ ] tech-debt: Add sanity tests for determinism (seeded gen + tick)'
-        - '- [ ] chore: Add performance counters to DevHUD (fps, tick time, allocations)'
-        - '- [ ] chore: Write Docs/VerticalSlice.md (how to run, goals, controls)'
-        - '- [ ] bug: Fix any domain reload / play-mode re-entry issues (no duplicate managers)'
-        - '- [ ] chore: Add README badges + quickstart (Unity version, how to open)'
-      definition_of_done:
-        - Milestone is set (No milestone = not Ready)
-        - Goal is clear and measurable
-        - Acceptance criteria are testable
-        - Child checklist exists (can be linked later)
-      notes: 'Milestone required: enforced by process/DoD. If milestone is missing, the issue is not Ready.'
+        - 'tech-debt: Add sanity tests for determinism (seeded gen + tick)'
+        - 'chore: Add performance counters to DevHUD (fps, tick time, allocations)'
+        - 'chore: Write Docs/VerticalSlice.md (how to run, goals, controls)'
+        - 'bug: Fix any domain reload / play-mode re-entry issues (no duplicate managers)'
+        - 'chore: Add README badges + quickstart (Unity version, how to open)'
+      notes: ''

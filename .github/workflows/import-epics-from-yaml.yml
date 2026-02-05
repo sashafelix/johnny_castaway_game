@@ -1,0 +1,135 @@
+name: Import Epics from YAML
+
+on:
+  workflow_dispatch:
+    inputs:
+      yaml_path:
+        description: "Path to epic YAML (e.g. ops/issues/m1-epics.yml)"
+        required: true
+        default: "ops/issues/m1-epics.yml"
+      dry_run:
+        description: "If true: do not create anything, only print what would happen"
+        required: true
+        default: "true"
+        type: choice
+        options: ["true", "false"]
+      max_existing_issue_pages:
+        description: "How many pages (100/page) to scan for existing issues (reduce API calls)."
+        required: true
+        default: "5"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install js-yaml
+        run: npm install js-yaml
+
+      - name: Import epics (or dry-run)
+        uses: actions/github-script@v7
+        env:
+          YAML_PATH: ${{ inputs.yaml_path }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          MAX_EXISTING_PAGES: ${{ inputs.max_existing_issue_pages }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require("fs");
+            const path = require("path");
+            const yaml = require("js-yaml");
+
+            const yamlPathInput = (process.env.YAML_PATH || "").trim();
+            const dryRun = ((process.env.DRY_RUN || "true").trim() === "true");
+            const maxExistingPages = parseInt((process.env.MAX_EXISTING_PAGES || "5").trim(), 10);
+
+            core.info(`Inputs -> yaml_path="${yamlPathInput}", dry_run=${dryRun}, max_existing_issue_pages=${maxExistingPages}`);
+
+            if (!yamlPathInput) { core.setFailed('Input "yaml_path" is empty'); return; }
+
+            const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
+            const yamlAbs = path.isAbsolute(yamlPathInput) ? yamlPathInput : path.join(workspace, yamlPathInput);
+            if (!fs.existsSync(yamlAbs)) { core.setFailed(`YAML file not found: ${yamlPathInput} (resolved to ${yamlAbs})`); return; }
+
+            const doc = yaml.load(fs.readFileSync(yamlAbs, "utf8"));
+            const msNumber = doc.milestone_number;
+            const items = doc.issues || [];
+
+            if (!msNumber) { core.setFailed("Epic YAML must include 'milestone_number'."); return; }
+            if (!Array.isArray(items) || items.length === 0) { core.setFailed("Epic YAML has no issues."); return; }
+
+            // Cache existing titles
+            const existingTitles = new Set();
+            if (!dryRun) {
+              for (let page = 1; page <= maxExistingPages; page++) {
+                const res = await github.rest.issues.listForRepo({ ...context.repo, state: "all", per_page: 100, page });
+                for (const it of res.data) existingTitles.add(it.title);
+                if (res.data.length < 100) break;
+              }
+            }
+
+            function mdList(arr) {
+              if (!arr || arr.length === 0) return "_(none)_";
+              return arr.map(x => `- ${x}`).join("\n");
+            }
+
+            function mdChecklist(arr) {
+              if (!arr || arr.length === 0) return "_(none)_";
+              return arr.map(x => `- [ ] ${x}`).join("\n");
+            }
+
+            function buildEpicBody(item) {
+              const b = item.body || {};
+              const out = [];
+              out.push(`## Goal\n${b.goal || ""}\n`);
+              out.push(`## Acceptance Criteria\n${mdList(b.acceptance_criteria || [])}\n`);
+              out.push(`## In Scope\n${mdList(b.in_scope || [])}\n`);
+              out.push(`## Out of Scope\n${mdList(b.out_of_scope || [])}\n`);
+              out.push(`## Child Issue Checklist\n${mdChecklist(b.child_issue_checklist || [])}\n`);
+              if (b.notes) out.push(`## Notes / links\n${b.notes}\n`);
+              out.push(`---\n**Area:** ${(item.area || "").trim()}  \n**Estimate:** ${(item.estimate || "").trim()}  \n**Risk:** ${(item.risk || "").trim()}\n`);
+              return out.join("\n").trim() + "\n";
+            }
+
+            let created = 0, skipped = 0, wouldCreate = 0;
+
+            for (const item of items) {
+              const title = (item.title || "").trim();
+              if (!title) continue;
+
+              if (!dryRun && existingTitles.has(title)) {
+                skipped++;
+                core.info(`Skip (exists): ${title}`);
+                continue;
+              }
+
+              if (dryRun) {
+                wouldCreate++;
+                core.info(`[DRY-RUN] Would create epic: "${title}" | milestone #${msNumber} | labels=${JSON.stringify(item.labels || [])}`);
+                continue;
+              }
+
+              const createdIssue = await github.rest.issues.create({
+                ...context.repo,
+                title,
+                body: buildEpicBody(item),
+                milestone: msNumber,
+                labels: item.labels || ["type:epic"],
+              });
+
+              created++;
+              existingTitles.add(title);
+              core.info(`Created epic #${createdIssue.data.number}: ${title}`);
+            }
+
+            if (dryRun) core.info(`DRY-RUN complete. Would create: ${wouldCreate}`);
+            else core.info(`Done. Created: ${created}, Skipped: ${skipped}`);
