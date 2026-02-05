@@ -1,4 +1,4 @@
-name: Import Child Issues from YAML (and link into Epic checklists)
+name: Import Child Issues from YAML
 
 on:
   workflow_dispatch:
@@ -8,13 +8,13 @@ on:
         required: true
         default: "ops/issues/m1-child-issues.yml"
       dry_run:
-        description: "If true: do not create or update anything, only print what would happen"
+        description: "If true: do not create anything, only print what would happen"
         required: true
         default: "true"
         type: choice
         options: ["true", "false"]
       update_epic_checklists:
-        description: "If true: link child issues into the parent epic checklist (batched per epic)"
+        description: "If true: link child issues into parent epic checklist (batched, robust matching)"
         required: true
         default: "true"
         type: choice
@@ -26,6 +26,10 @@ on:
 
 permissions:
   issues: write
+
+concurrency:
+  group: import-child-issues-from-yaml
+  cancel-in-progress: false
 
 jobs:
   import:
@@ -46,7 +50,7 @@ jobs:
       - name: Install js-yaml
         run: npm install js-yaml
 
-      - name: Import issues (or dry-run)
+      - name: Import child issues (or dry-run) + batch-update epic checklists
         uses: actions/github-script@v7
         env:
           YAML_PATH: ${{ inputs.yaml_path }}
@@ -62,27 +66,19 @@ jobs:
 
             const yamlPathInput = (process.env.YAML_PATH || "").trim();
             const dryRun = ((process.env.DRY_RUN || "true").trim() === "true");
-            const updateEpic = ((process.env.UPDATE_EPIC_CHECKLISTS || "true").trim() === "true");
+            const updateEpics = ((process.env.UPDATE_EPIC_CHECKLISTS || "true").trim() === "true");
             const maxExistingPages = parseInt((process.env.MAX_EXISTING_PAGES || "5").trim(), 10);
 
-            core.info(`Inputs -> yaml_path="${yamlPathInput}", dry_run=${dryRun}, update_epic_checklists=${updateEpic}, max_existing_issue_pages=${maxExistingPages}`);
+            core.info(`Inputs -> yaml_path="${yamlPathInput}", dry_run=${dryRun}, update_epic_checklists=${updateEpics}, max_existing_issue_pages=${maxExistingPages}`);
 
             if (!yamlPathInput) { core.setFailed('Input "yaml_path" is empty'); return; }
 
-            const repoRoot = process.env.GITHUB_WORKSPACE || process.cwd();
-            const resolvedYamlPath = path.isAbsolute(yamlPathInput)
-              ? yamlPathInput
-              : path.join(repoRoot, yamlPathInput);
+            const yamlPath = path.resolve(process.cwd(), yamlPathInput);
+            core.info(`Resolved YAML path -> ${yamlPath}`);
 
-            core.info(`Resolved YAML path -> ${resolvedYamlPath}`);
+            if (!fs.existsSync(yamlPath)) { core.setFailed(`YAML file not found: ${yamlPath}`); return; }
 
-            if (!fs.existsSync(resolvedYamlPath)) {
-              core.setFailed(`YAML file not found: ${resolvedYamlPath}`);
-              return;
-            }
-
-            const doc = yaml.load(fs.readFileSync(resolvedYamlPath, "utf8"));
-
+            const doc = yaml.load(fs.readFileSync(yamlPath, "utf8"));
             const milestoneNumber = doc.milestone_number;
             const milestoneTitle = doc.milestone;
             const items = doc.issues || [];
@@ -111,28 +107,28 @@ jobs:
             core.info(`Using milestone #${msNumber}: ${msTitleForLog}`);
             core.info(`Issues in YAML: ${items.length}`);
 
-            // -----------------------------
-            // Existing issue title -> number cache
-            // -----------------------------
-            const existingTitleToNumber = new Map();
-            core.info(`Scanning existing issues (up to ${maxExistingPages} pages @ 100/page)...`);
-            for (let page = 1; page <= maxExistingPages; page++) {
-              const res = await github.rest.issues.listForRepo({
-                ...context.repo,
-                state: "all",
-                per_page: 100,
-                page,
-              });
-              for (const it of res.data) existingTitleToNumber.set(it.title, it.number);
-              if (res.data.length < 100) break;
+            // Cache existing issues by title -> number (works for "Skip (exists)" linking)
+            const titleToNumber = new Map();
+            if (!dryRun) {
+              core.info(`Scanning existing issues (up to ${maxExistingPages} pages @ 100/page)...`);
+              for (let page = 1; page <= maxExistingPages; page++) {
+                const res = await github.rest.issues.listForRepo({
+                  ...context.repo,
+                  state: "all",
+                  per_page: 100,
+                  page,
+                });
+                for (const it of res.data) titleToNumber.set(it.title, it.number);
+                if (res.data.length < 100) break;
+              }
+              core.info(`Cached ${titleToNumber.size} existing issues (title -> number).`);
+            } else {
+              core.info("DRY-RUN: skipping scan of existing issues to minimize API calls.");
             }
-            core.info(`Cached ${existingTitleToNumber.size} existing issues (title -> number).`);
 
-            // -----------------------------
             // Cache epics by title
-            // -----------------------------
             const epicsByTitle = new Map();
-            core.info('Fetching epics (label: "type:epic")...');
+            core.info("Fetching epics (label: type:epic)...");
             const epics = await github.paginate(github.rest.issues.listForRepo, {
               ...context.repo,
               state: "all",
@@ -142,9 +138,6 @@ jobs:
             for (const e of epics) epicsByTitle.set(e.title, e);
             core.info(`Cached ${epicsByTitle.size} epics (title -> issue).`);
 
-            // -----------------------------
-            // Helpers
-            // -----------------------------
             function mdChecklist(lines) {
               if (!lines || lines.length === 0) return "_(none)_";
               return lines.map(x => `- [ ] ${x}`).join("\n");
@@ -174,222 +167,172 @@ jobs:
               return out.join("\n").trim() + "\n";
             }
 
-            function stripTypePrefix(s) {
-              return (s || "").replace(/^\s*(feat|chore|bug|tech-debt|config)\s*:\s*/i, "").trim();
-            }
+            // Normalization helpers for robust checklist matching
+            const TYPE_PREFIX_RE = /^(feat|feature|chore|bug|tech-debt|config)\s*:\s*/i;
+            const ISSUE_REF_RE = /^#\d+\s+/;
 
-            function normalize(s) {
-              if (!s) return "";
-              return String(s)
-                .replace(/\r\n/g, "\n")
-                // arrows
-                .replace(/[→⇒➜➔]/g, "->")
-                // dashes
-                .replace(/[—–]/g, "-")
-                // smart quotes
-                .replace(/[“”]/g, '"')
-                .replace(/[‘’]/g, "'")
-                // collapse whitespace
+            function normalizeText(s) {
+              return (s || "")
+                .replace(/\u00A0/g, " ")     // nbsp
                 .replace(/\s+/g, " ")
-                .trim()
-                .toLowerCase();
+                .trim();
             }
 
-            function unique(arr) {
-              return Array.from(new Set(arr.filter(Boolean)));
+            function normalizeChecklistContent(lineContent) {
+              // Remove issue ref and type prefix so we can match raw_title or title variants
+              let t = normalizeText(lineContent);
+              t = t.replace(ISSUE_REF_RE, "");
+              t = t.replace(TYPE_PREFIX_RE, "");
+              return t.trim();
             }
 
-            function buildCandidates(item) {
-              const t = (item.title || "").trim();
-              const raw = (item.raw_title || "").trim();
-
-              const cands = unique([
-                t,
-                stripTypePrefix(t),
-                raw,
-                stripTypePrefix(raw),
-              ]);
-
-              // also try variants with "->" vs "→" etc (normalize will handle it, but keep for logging)
-              return cands;
+            function parseChecklistLine(line) {
+              // Matches:
+              // - [ ] text
+              // * [x] text
+              const m = line.match(/^\s*[-*]\s*\[\s*[ xX]?\s*\]\s*(.+?)\s*$/);
+              return m ? m[1] : null;
             }
 
-            // Link map: epicNumber -> { epicTitle, lines: [{issueNumber, candidates}] }
-            const epicLinkRequests = new Map();
+            function ensureChecklistSection(body) {
+              const header = "## Child Issue Checklist";
+              if (body.includes(header)) return body;
+              return (body || "").trimEnd() + `\n\n${header}\n\n`;
+            }
 
-            function queueEpicLink(epic, issueNumber, candidates) {
-              if (!updateEpic || !epic) return;
-              if (!epicLinkRequests.has(epic.number)) {
-                epicLinkRequests.set(epic.number, { epicTitle: epic.title, lines: [] });
+            function upsertChecklistLink(epicBody, rawTitle, fullTitle, issueNumber) {
+              let body = ensureChecklistSection(epicBody || "");
+              const lines = body.split("\n");
+
+              const candidates = [];
+              if (rawTitle) candidates.push(rawTitle);
+              if (fullTitle) candidates.push(fullTitle);
+              if (fullTitle) candidates.push(fullTitle.replace(TYPE_PREFIX_RE, "")); // without "feat:"
+              const candidateNorms = candidates.map(c => normalizeChecklistContent(c));
+
+              // Find best matching checklist line anywhere in body
+              let foundIndex = -1;
+
+              for (let i = 0; i < lines.length; i++) {
+                const content = parseChecklistLine(lines[i]);
+                if (!content) continue;
+
+                const lineNorm = normalizeChecklistContent(content);
+                if (candidateNorms.includes(lineNorm)) {
+                  foundIndex = i;
+                  break;
+                }
               }
-              epicLinkRequests.get(epic.number).lines.push({ issueNumber, candidates });
-              core.info(`Queued epic checklist update: ${epic.title} <- #${issueNumber}`);
+
+              const newLine = `- [ ] #${issueNumber} ${fullTitle}`;
+
+              if (foundIndex >= 0) {
+                // Replace exact matched line
+                lines[foundIndex] = newLine;
+                return { updatedBody: lines.join("\n"), action: "replaced" };
+              }
+
+              // Append under checklist header
+              const headerIdx = lines.findIndex(l => l.trim() === "## Child Issue Checklist");
+              if (headerIdx >= 0) {
+                // Insert after header (skip possible blank line)
+                let insertAt = headerIdx + 1;
+                while (insertAt < lines.length && lines[insertAt].trim() === "") insertAt++;
+                lines.splice(insertAt, 0, newLine);
+                return { updatedBody: lines.join("\n"), action: "appended" };
+              }
+
+              // Fallback: append at end
+              lines.push("", "## Child Issue Checklist", "", newLine);
+              return { updatedBody: lines.join("\n"), action: "appended" };
             }
 
-            // -----------------------------
-            // Create or skip issues, and queue epic linking
-            // -----------------------------
-            let created = 0, skipped = 0;
+            // Batch updates: epicNumber -> { epic, body, pending: [{rawTitle,title,issueNumber}] }
+            const epicBatches = new Map();
+
+            function queueEpicUpdate(epic, rawTitle, title, issueNumber) {
+              if (!updateEpics || !epic) return;
+              const key = String(epic.number);
+              if (!epicBatches.has(key)) {
+                epicBatches.set(key, { epic, originalBody: epic.body || "", pending: [] });
+              }
+              epicBatches.get(key).pending.push({ rawTitle, title, issueNumber });
+            }
+
+            let wouldCreate = 0, created = 0, skipped = 0;
 
             for (const item of items) {
               const title = (item.title || "").trim();
               if (!title) continue;
 
               const epic = item.parent_epic ? epicsByTitle.get(item.parent_epic) : null;
-              const candidates = buildCandidates(item);
 
-              // If exists, skip creation but still link
-              const existingNumber = existingTitleToNumber.get(title);
-
-              if (existingNumber) {
-                skipped++;
-                core.info(`Skip (exists): #${existingNumber} ${title}`);
-                if (epic) queueEpicLink(epic, existingNumber, candidates);
-                continue;
-              }
+              // Determine existing
+              const existingNumber = (!dryRun && titleToNumber.has(title)) ? titleToNumber.get(title) : null;
 
               if (dryRun) {
+                wouldCreate++;
                 core.info(`[DRY-RUN] Would create: "${title}" | milestone #${msNumber} | labels=${JSON.stringify(item.labels || [])} | parent_epic=${epic ? "#" + epic.number : (item.parent_epic || "(none)")}`);
                 continue;
               }
 
-              const createdIssue = await github.rest.issues.create({
-                ...context.repo,
-                title,
-                body: buildBody(item, epic ? epic.number : null),
-                milestone: msNumber,
-                labels: item.labels || [],
-              });
+              let issueNumber = existingNumber;
 
-              created++;
-              const newNum = createdIssue.data.number;
-              core.info(`Created #${newNum}: ${title}`);
-
-              // Track new title to prevent duplicates within same run
-              existingTitleToNumber.set(title, newNum);
-
-              if (epic) queueEpicLink(epic, newNum, candidates);
-            }
-
-            // -----------------------------
-            // Apply epic checklist updates (batched per epic)
-            // -----------------------------
-            function linkIntoEpicBody(epicBody, linkReqs) {
-              if (!epicBody) return { body: epicBody, updatedCount: 0, misses: [] };
-
-              const lines = epicBody.split("\n");
-              const misses = [];
-              let updatedCount = 0;
-
-              // Precompute normalized checklist line content for task lines.
-              // Task item regex: "- [ ] text" or "* [x] text"
-              const taskRe = /^(\s*[-*]\s+\[( |x|X)\]\s+)(.*)$/;
-
-              // Build a lookup of indices by normalized text
-              // We'll allow matches against:
-              //  - raw text
-              //  - raw text with leading "#123 " stripped
-              const indexed = lines.map((ln, idx) => {
-                const m = ln.match(taskRe);
-                if (!m) return null;
-                const prefix = m[1];
-                const text = m[3] || "";
-                const textNoLink = text.replace(/^\s*#\d+\s+/, "").trim();
-                return {
-                  idx,
-                  prefix,
-                  originalText: text,
-                  textNoLink,
-                  norm: normalize(text),
-                  normNoLink: normalize(textNoLink),
-                  checked: m[2].toLowerCase() === "x",
-                };
-              }).filter(Boolean);
-
-              function findMatchIndex(candsNorm) {
-                // Prefer exact match (noLink), then exact match (full), then contains
-                for (const c of candsNorm) {
-                  const exactNoLink = indexed.find(x => x.normNoLink === c);
-                  if (exactNoLink) return exactNoLink;
-                }
-                for (const c of candsNorm) {
-                  const exactFull = indexed.find(x => x.norm === c);
-                  if (exactFull) return exactFull;
-                }
-                for (const c of candsNorm) {
-                  const containsNoLink = indexed.find(x => x.normNoLink.includes(c) || c.includes(x.normNoLink));
-                  if (containsNoLink) return containsNoLink;
-                }
-                return null;
-              }
-
-              for (const req of linkReqs) {
-                const issueNumber = req.issueNumber;
-                const candsNorm = req.candidates.map(normalize).filter(Boolean);
-
-                const match = findMatchIndex(candsNorm);
-                if (!match) {
-                  misses.push({ issueNumber, candidates: req.candidates });
-                  continue;
-                }
-
-                // If already starts with "#<issueNumber> " then nothing to do
-                const already = match.textNoLink.startsWith(`#${issueNumber} `) || match.originalText.trim().startsWith(`#${issueNumber} `);
-                if (already) continue;
-
-                // Rewrite line, preserving checkbox and original human text (without any existing #123 prefix)
-                const rewrittenText = `#${issueNumber} ${match.textNoLink}`;
-                lines[match.idx] = `${match.prefix}${rewrittenText}`;
-                updatedCount++;
-              }
-
-              return { body: lines.join("\n"), updatedCount, misses };
-            }
-
-            const epicIds = Array.from(epicLinkRequests.keys());
-
-            if (updateEpic && epicIds.length > 0) {
-              core.info(`Applying ${epicIds.length} epic body update(s)...`);
-
-              for (const epicNumber of epicIds) {
-                const req = epicLinkRequests.get(epicNumber);
-
-                // Fetch fresh epic body each time (avoid stale writes)
-                const epicGet = await github.rest.issues.get({
+              if (existingNumber) {
+                skipped++;
+                core.info(`Skip (exists): #${existingNumber} ${title}`);
+              } else {
+                const createdIssue = await github.rest.issues.create({
                   ...context.repo,
-                  issue_number: epicNumber,
+                  title,
+                  body: buildBody(item, epic ? epic.number : null),
+                  milestone: msNumber,
+                  labels: item.labels || [],
                 });
+                issueNumber = createdIssue.data.number;
+                created++;
+                core.info(`Created #${issueNumber}: ${title}`);
+                titleToNumber.set(title, issueNumber);
+              }
 
-                const before = epicGet.data.body || "";
-                const { body: after, updatedCount, misses } = linkIntoEpicBody(before, req.lines);
+              // Queue epic checklist linkage (even for skipped issues)
+              queueEpicUpdate(epic, (item.raw_title || "").trim(), title, issueNumber);
+            }
 
-                if (misses.length > 0) {
-                  for (const miss of misses) {
-                    core.info(
-                      `Epic checklist line not found in "${req.epicTitle}" for any of: ${JSON.stringify(miss.candidates)}`
-                    );
+            if (dryRun) {
+              core.info(`DRY-RUN complete. Would create: ${wouldCreate}`);
+              return;
+            }
+
+            // Apply batched epic updates (one update per epic per run)
+            if (updateEpics && epicBatches.size > 0) {
+              core.info(`Applying batched epic checklist updates for ${epicBatches.size} epic(s)...`);
+
+              for (const batch of epicBatches.values()) {
+                let body = batch.originalBody || "";
+                let changed = 0;
+
+                for (const entry of batch.pending) {
+                  const before = body;
+                  const res = upsertChecklistLink(body, entry.rawTitle, entry.title, entry.issueNumber);
+                  body = res.updatedBody;
+                  if (body !== before) {
+                    changed++;
+                    core.info(`Epic #${batch.epic.number}: ${res.action} checklist -> #${entry.issueNumber} (${entry.title})`);
                   }
                 }
 
-                if (updatedCount === 0) {
-                  core.info(`No epic checklist changes needed for epic #${epicNumber} (${req.epicTitle}).`);
-                  continue;
+                if (changed > 0) {
+                  await github.rest.issues.update({
+                    ...context.repo,
+                    issue_number: batch.epic.number,
+                    body,
+                  });
+                  core.info(`Updated epic #${batch.epic.number} (${batch.epic.title}) with ${changed} checklist link(s).`);
+                } else {
+                  core.info(`No epic changes needed for #${batch.epic.number} (${batch.epic.title}).`);
                 }
-
-                if (dryRun) {
-                  core.info(`[DRY-RUN] Would update epic #${epicNumber} (${req.epicTitle}) with ${updatedCount} checklist link(s).`);
-                  continue;
-                }
-
-                await github.rest.issues.update({
-                  ...context.repo,
-                  issue_number: epicNumber,
-                  body: after,
-                });
-
-                core.info(`Updated epic #${epicNumber} checklist (batched, ${updatedCount} link(s)).`);
               }
             }
 
-            if (dryRun) core.info(`DRY-RUN complete.`);
-            else core.info(`Done. Created: ${created}, Skipped: ${skipped}`);
+            core.info(`Done. Created: ${created}, Skipped: ${skipped}`);
