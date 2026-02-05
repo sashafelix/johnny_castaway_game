@@ -1,32 +1,23 @@
-name: Chore
-description: Maintenance, cleanup, tooling, internal improvements
-title: "chore: "
-labels: ["type:chore"]
+name: Tech Debt
+description: Refactor or redesign something that works but is fragile/ugly
+title: "debt: "
+labels: ["type:tech-debt"]
 body:
-  - type: dropdown
-    id: subtype
+  - type: textarea
+    id: pain
     attributes:
-      label: Chore type
-      options:
-        - housekeeping (renames, folder moves, cleanup)
-        - maintenance (deps/config tidy-up)
-        - tooling (scripts, CI, automation)
+      label: The pain
+      description: What’s currently wrong (fragile, hard to change, slow, confusing)?
+      placeholder: "Input handling is duplicated across scripts and causes inconsistent behavior."
     validations:
       required: true
 
   - type: textarea
-    id: what
+    id: proposal
     attributes:
-      label: What
-      placeholder: "Standardize Assets folder structure and update README."
-    validations:
-      required: true
-
-  - type: textarea
-    id: why
-    attributes:
-      label: Why
-      placeholder: "Reduce chaos and make future additions predictable."
+      label: Proposed fix
+      description: What change would pay down the debt?
+      placeholder: "Create an InputService and migrate all input reads to it."
     validations:
       required: true
 
@@ -35,9 +26,10 @@ body:
     attributes:
       label: Definition of Done
       placeholder: |
-        - [ ] Change implemented
-        - [ ] No gameplay regression
-        - [ ] No new warnings/errors
+        - [ ] Old approach removed or isolated
+        - [ ] New approach documented
+        - [ ] No regressions in Play Mode
+        - [ ] No new Console errors
         - [ ] Committed + pushed
     validations:
       required: true
