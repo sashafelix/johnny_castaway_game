@@ -1,0 +1,96 @@
+name: Issue Form Labeler
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  issues: write
+
+jobs:
+  label_from_form:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels from Issue Form fields
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || "";
+
+            // Only apply this automation to Epics (label is applied by the form)
+            const hasEpicLabel = (issue.labels || []).some(l => l.name === "type:epic");
+            if (!hasEpicLabel) return;
+
+            // Helper: extract the value under a "### FieldName" heading
+            function extractField(fieldName) {
+              const re = new RegExp(`###\\s+${fieldName}\\s*\\n\\n([^#]+)`, "i");
+              const m = body.match(re);
+              if (!m) return null;
+              return m[1].trim().split("\n")[0].trim(); // first line of the answer
+            }
+
+            const area = extractField("Area");     // Gen/Sim/Save/UI/Content/Build
+            const estimate = extractField("Estimate"); // XS/S/M/L (optional)
+            const risk = extractField("Risk");      // Low/Med/High (optional)
+
+            // Map form values -> labels
+            const areaMap = {
+              "Gen": "area:gen",
+              "Sim": "area:sim",
+              "Save": "area:save",
+              "UI": "area:ui",
+              "Content": "area:content",
+              "Build": "area:build",
+            };
+
+            const estimateMap = { "XS": "est:xs", "S": "est:s", "M": "est:m", "L": "est:l" };
+            const riskMap = { "Low": "risk:low", "Med": "risk:med", "High": "risk:high" };
+
+            const labelsToAdd = [];
+
+            if (area && areaMap[area]) labelsToAdd.push(areaMap[area]);
+            if (estimate && estimateMap[estimate]) labelsToAdd.push(estimateMap[estimate]);
+            if (risk && riskMap[risk]) labelsToAdd.push(riskMap[risk]);
+
+            // Create missing labels automatically (nice quality-of-life)
+            async function ensureLabel(name, color = "ededed") {
+              try {
+                await github.rest.issues.getLabel({ ...context.repo, name });
+              } catch (e) {
+                if (e.status === 404) {
+                  await github.rest.issues.createLabel({
+                    ...context.repo,
+                    name,
+                    color,
+                    description: "Auto-managed label"
+                  });
+                } else {
+                  throw e;
+                }
+              }
+            }
+
+            // Ensure needed labels exist before adding
+            for (const l of labelsToAdd) {
+              await ensureLabel(l);
+            }
+
+            // Remove old area labels to keep it clean (only one area allowed)
+            const existing = (issue.labels || []).map(l => l.name);
+            const oldAreaLabels = existing.filter(n => n.startsWith("area:"));
+            if (oldAreaLabels.length) {
+              for (const l of oldAreaLabels) {
+                try {
+                  await github.rest.issues.removeLabel({ ...context.repo, issue_number: issue.number, name: l });
+                } catch (_) {}
+              }
+            }
+
+            if (labelsToAdd.length) {
+              await github.rest.issues.addLabels({
+                ...context.repo,
+                issue_number: issue.number,
+                labels: labelsToAdd
+              });
+            }

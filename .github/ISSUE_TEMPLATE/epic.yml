@@ -1,0 +1,127 @@
+name: Epic
+description: A large deliverable/outcome spanning multiple tasks
+title: "EPIC: "
+labels: ["type:epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Epics describe outcomes. Keep it crisp. Add child issues as a checklist.
+
+        ## Milestone required (process rule)
+        GitHub issue forms can’t truly force milestone selection — so we enforce it via Definition of Done:
+        **No milestone = not Ready.**
+        (Set the Milestone in the right sidebar after creating this issue.)
+
+  - type: checkboxes
+    id: milestone_ack
+    attributes:
+      label: Milestone discipline
+      description: This is how we stop scope-creep goblins from eating the roadmap.
+      options:
+        - label: I will set a Milestone for this Epic before moving it to **Ready**
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Pick the primary area this Epic belongs to (used for labeling + filtering).
+      options:
+        - Gen
+        - Sim
+        - Save
+        - UI
+        - Content
+        - Build
+    validations:
+      required: true
+
+  - type: dropdown
+    id: estimate
+    attributes:
+      label: Estimate
+      description: Rough size (solo-dev friendly).
+      options:
+        - XS
+        - S
+        - M
+        - L
+    validations:
+      required: false
+
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Risk
+      description: How likely is this to explode into surprises?
+      options:
+        - Low
+        - Med
+        - High
+    validations:
+      required: false
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One or two sentences. What outcome exists when this epic is done?
+      placeholder: "Implement seeded island generation v0 that is deterministic."
+    validations:
+      required: true
+
+  - type: textarea
+    id: exit_criteria
+    attributes:
+      label: Acceptance / Exit Criteria
+      description: Bullet list of testable conditions that prove this epic is complete.
+      placeholder: |
+        - Given seed X, generation produces identical output across runs
+        - Basic island scene renders generated terrain/tiles
+        - Logged summary includes seed + biome + key parameters
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: In Scope
+      placeholder: |
+        - Deterministic RNG wrapper
+        - Terrain/tiles v0 generation
+        - Debug view or console output
+    validations:
+      required: false
+
+  - type: textarea
+    id: out_of_scope
+    attributes:
+      label: Out of Scope
+      placeholder: |
+        - Fancy visuals
+        - Biome variety beyond v0
+        - Performance optimization
+    validations:
+      required: false
+
+  - type: textarea
+    id: child_issues
+    attributes:
+      label: Child Issues (Checklist)
+      description: Add task list items. Later replace with links (#123).
+      placeholder: |
+        - [ ] Create RNG service (seeded) + tests
+        - [ ] Implement island generator v0
+        - [ ] Add debug view / logs
+        - [ ] Hook generator into a playable scene
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes / Links
+      placeholder: "Docs, diagrams, references, related discussions."
+    validations:
+      required: false
