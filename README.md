@@ -18,7 +18,7 @@ Open the project in Unity Hub:
 
 1. Click **Add** → select `UnityProject/JohnnyCastawayGame`
 2. Unity Hub installs the correct editor version if needed
-3. Open `Assets/Scenes/Bootstrap.unity`
+3. Open `Assets/Scenes/SampleScene.unity` (this is the bootstrap scene)
 4. Press **Play** to verify the project runs cleanly
 
 ## Project Structure
